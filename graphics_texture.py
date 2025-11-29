@@ -1,0 +1,73 @@
+# graphics_texture.py
+
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from graphics_library import GraphicsLibrary
+
+from PIL import Image
+import numpy as np
+from OpenGL import GL as gl
+
+class GraphicsTexture:
+    def __init__(
+        self,
+        graphics: Optional["GraphicsLibrary"] = None,
+        file_name: Optional[str] = None,
+    ) -> None:
+        self.graphics: Optional["GraphicsLibrary"] = graphics
+        self.file_name: Optional[str] = file_name
+
+        self.texture_index: int = -1
+        self.width: int = 0
+        self.height: int = 0
+        self.widthf: float = 0.0
+        self.heightf: float = 0.0
+
+        # Auto-load if both graphics + path are provided
+        if graphics is not None and file_name is not None:
+            self.load()
+
+    # --------------------------------------------------------------
+    # Load/reload texture from file
+    # --------------------------------------------------------------
+    def load(self) -> None:
+        """
+        Load or reload the texture from file_name.
+        """
+        if self.graphics is None or self.file_name is None:
+            return
+
+        # If previously loaded, delete old GL texture
+        self.unload()
+
+        # Open with PIL
+        img = Image.open(self.file_name).convert("RGBA")
+        self.width, self.height = img.size
+        self.widthf = float(self.width)
+        self.heightf = float(self.height)
+
+        bitmap = np.array(img, dtype=np.uint8)
+
+        # Use GraphicsLibrary to create GL texture
+        self.texture_index = self.graphics.texture_generate_from_bitmap(bitmap)
+
+    # --------------------------------------------------------------
+    # Unload / delete GPU texture
+    # --------------------------------------------------------------
+    def unload(self) -> None:
+        """
+        Delete the texture from GPU and reset fields.
+        """
+        self.graphics.texture_delete(self.texture_index)
+        self.texture_index = -1
+        self.width = 0
+        self.height = 0
+        self.widthf = 0.0
+        self.heightf = 0.0
+
+    def print(self) -> None:
+        print("GraphicsTexture -> [" + str(self.width) + ", " + str(self.height) + "]")
+        print("\tIndex = " + str(self.texture_index))
+        print("\tFile: " + str(self.file_name))
