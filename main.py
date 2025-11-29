@@ -32,6 +32,68 @@ def framebuffer_size_callback(window, width, height):
 
     print("Resized:", width, height)
 
+def key_callback(window, key, scancode, action, mods):
+
+    print("action = ", action)
+    print("mods = ", mods)
+
+    mod_shift = False
+    if mods & glfw.MOD_SHIFT:
+        mod_shift = True
+
+    # We will count CTRL and CMD as same thing...
+    mod_control = False
+    if mods & glfw.MOD_CONTROL or mods & glfw.MOD_SUPER:
+        mod_control = True
+
+    mod_alt = False
+    if mods & glfw.MOD_ALT:
+        mod_alt = True
+
+    print("ctrl:", mod_control, "alt:", mod_alt, "shift:", mod_shift)
+    
+    if key == glfw.KEY_ESCAPE:
+        glfw.set_window_should_close(window, True)
+
+    step = 10.0
+    if key == glfw.KEY_LEFT:
+        print("left")
+    if key == glfw.KEY_RIGHT:
+        print("right")
+    if key == glfw.KEY_UP:
+        print("up")
+    if key == glfw.KEY_DOWN:
+        print("down")
+
+    zoom_step = 0.1
+    if key == glfw.KEY_Z:
+        print("z")
+    if key == glfw.KEY_X:
+        print("x")
+
+
+def mouse_button_callback(window, button, action, mods):
+
+    if button == glfw.MOUSE_BUTTON_LEFT:
+        print("Left,", action)
+        
+    if button == glfw.MOUSE_BUTTON_RIGHT:
+        print("Right,", action)
+        
+    if button == glfw.MOUSE_BUTTON_MIDDLE:
+        print("Middle,", action)
+    
+def cursor_pos_callback(window, xpos, ypos):
+    pass
+
+def scroll_callback(window, xoffset, yoffset):
+    scroll_dir = 0
+    if yoffset > 0:
+        scroll_dir = -1
+    elif yoffset < 0:
+        scroll_dir = 1
+    print("Scroll Dir: ", scroll_dir)
+
 # ----------------------------------------------------------------------
 # Main: Textured triangle using vanilla OpenGL + your sprite_2d shaders
 # ----------------------------------------------------------------------
@@ -68,6 +130,14 @@ def main():
 
     glfw.set_window_user_pointer(window, graphics)
     glfw.set_framebuffer_size_callback(window, framebuffer_size_callback)
+
+    # The Keyboard
+    glfw.set_key_callback(window, key_callback)
+
+    # The Mouse
+    glfw.set_mouse_button_callback(window, mouse_button_callback)
+    glfw.set_cursor_pos_callback(window, cursor_pos_callback)
+    glfw.set_scroll_callback(window, scroll_callback)
     
     texture = GraphicsTexture(graphics=graphics, file_name=image_path)
     texture.print()
@@ -79,10 +149,10 @@ def main():
     sprite_prog = pipeline.program_sprite2d
 
     sprite_vertices = [
-        Sprite2DVertex(x=-140.0, y=-133.0, u=0.0, v=1.0),
-        Sprite2DVertex(x=140.0,  y=-133.0, u=1.0, v=1.0),
-        Sprite2DVertex(x=-140.0,  y=140.0, u=0.0, v=0.0),
-        Sprite2DVertex(x=140.0,  y=140.0, u=1.0, v=0.0),
+        Sprite2DVertex(x=-140.0, y=-133.0, u=0.0, v=0.0),
+        Sprite2DVertex(x=140.0,  y=-133.0, u=1.0, v=0.0),
+        Sprite2DVertex(x=-140.0,  y=140.0, u=0.0, v=1.0),
+        Sprite2DVertex(x=140.0,  y=140.0, u=1.0, v=1.0),
     ]
 
     sprite_vertex_buffer = GraphicsArrayBuffer[Sprite2DVertex]()
@@ -116,8 +186,8 @@ def main():
 
         model_view = GraphicsMatrix()
         model_view.translate(x=width/2, y=height/2, z=0.0)
-        model_view.rotate_z(roz * 0.04)
-        model_view.scale(2.0)
+        #model_view.rotate_z(roz * 0.04)
+        #model_view.scale(2.0)
 
         graphics.clear_rgb(0.22, 0.22, 0.28)
 
