@@ -1,8 +1,10 @@
 # graphics_sprite_instance.py
 
 from __future__ import annotations
-from typing import Generic, TypeVar, Sequence, Optional
-from graphics_sprite_vertex_like import GraphicsSpriteVertexLike
+from typing import Generic, TypeVar, Sequence, Optional, Protocol
+
+from primitives import PositionConforming2D, TextureCoordinateConforming
+from float_bufferable import FloatBufferable
 from graphics_array_buffer import GraphicsArrayBuffer
 from graphics_library import GraphicsLibrary
 from graphics_sprite import GraphicsSprite
@@ -10,7 +12,22 @@ from graphics_matrix import GraphicsMatrix
 from shader_program import ShaderProgram
 from graphics_color import GraphicsColor
 
-T = TypeVar("T", bound=GraphicsSpriteVertexLike)
+class SpriteVertexConforming(
+    PositionConforming2D,
+    TextureCoordinateConforming,
+    FloatBufferable,
+    Protocol,
+):
+    """
+    A sprite vertex must:
+      - have x, y (position)
+      - have u, v (texture coordinates)
+      - be able to write itself to a float buffer
+    """
+    # No extra members; requirements come from the parent protocols.
+    ...
+
+T = TypeVar("T", bound=SpriteVertexConforming)
 
 class GraphicsSpriteInstance(Generic[T]):
     def __init__(self, vertex_array: Sequence[T]) -> None:
@@ -148,7 +165,6 @@ class GraphicsSpriteInstance(Generic[T]):
         self.graphics_array_buffer.load(self.graphics, self.vertex_array)
         self.is_vertex_buffer_dirty = False
 
-
     # ------------------------------------------------------------------
     # Render
     # ------------------------------------------------------------------
@@ -172,15 +188,39 @@ class GraphicsSpriteInstance(Generic[T]):
             self.is_vertex_buffer_dirty = False
 
         # Attach vertex buffer to program
-        graphics.link_buffer_to_shader_program_array_buffer(program, self.graphics_array_buffer)
+        graphics.link_buffer_to_shader_program(program, self.graphics_array_buffer)
 
         # Set uniforms
         graphics.uniforms_texture_set_sprite(program, self.sprite)
         graphics.uniforms_modulate_color_set_color(program, self.color)
-        graphics.uniforms_matrices_set(program=program, projection_matrix=self.projection_matrix, model_view_matrix=self.model_view_matrix)
+        graphics.uniforms_matrices_set(
+            program=program,
+            projection_matrix=self.projection_matrix,
+            model_view_matrix=self.model_view_matrix,
+        )
 
         # Draw as triangle strip with 4 indices
         graphics.draw_triangle_strips(self.index_buffer, 4)
 
         # Unbind
         graphics.unlink_buffer_from_shader_program(program)
+
+    def dispose(self) -> None:
+        """
+        Delete GPU buffers and reset bindings.
+        Safe to call multiple times.
+        """
+        # Dispose vertex buffer (VBO)
+        if self.graphics_array_buffer is not None:
+            self.graphics_array_buffer.dispose()
+
+        # Dispose index buffer (EBO) if valid
+        if self.graphics is not None:
+            # Assumes graphics has a matching delete function for index buffers
+            self.graphics.buffer_index_delete(self.index_buffer)
+
+        # Reset state
+        self.index_buffer = None
+        self.graphics = None
+        self.sprite = None
+        self.is_vertex_buffer_dirty = True

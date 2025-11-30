@@ -38,7 +38,7 @@ class GraphicsScene(ABC):
         """Called after load()."""
         pass
 
-    def resize(self, width: int, height: int) -> None:
+    def resize(self) -> None:
         """Window or framebuffer size changed."""
         pass
 

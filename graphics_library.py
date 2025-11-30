@@ -17,21 +17,37 @@ T = TypeVar("T", bound=FloatBufferable)
 class GraphicsLibrary:
     def __init__(
         self,
-        width: int,
-        height: int,
+        screen_width: int,
+        screen_height: int,
+        screen_scale_x: int,
+        screen_scale_y: int,
+        frame_buffer_width: int,
+        frame_buffer_height: int
     ) -> None:
-        self.width: int = int(width)
-        self.height: int = int(height)
-        self.widthf: float = float(width)
-        self.heightf: float = float(height)
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+        self.screen_scale_x = screen_scale_x
+        self.screen_scale_y = screen_scale_y
+        self.frame_buffer_width = frame_buffer_width
+        self.frame_buffer_height = frame_buffer_height
         self.texture_set_filter_linear()
         self.texture_set_clamp()
 
-    def resize(self, width: int, height: int) -> None:
-        self.width = width
-        self.height = height
-        gl.glViewport(0, 0, width, height)
-        print("g resuz", width, "and", height)
+    def resize(self,
+        screen_width: int,
+        screen_height: int,
+        screen_scale_x: int,
+        screen_scale_y: int,
+        frame_buffer_width: int,
+        frame_buffer_height: int) -> None:
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+        self.screen_scale_x = screen_scale_x
+        self.screen_scale_y = screen_scale_y
+        self.frame_buffer_width = frame_buffer_width
+        self.frame_buffer_height = frame_buffer_height
+        gl.glViewport(0, 0, frame_buffer_width, frame_buffer_height)
+        print("g resized screen", screen_width, "and", screen_height, ", scale ", screen_scale_x, "and", screen_scale_y, "frame buffer", frame_buffer_width, "and", frame_buffer_height)
 
 
     def clear(self) -> None:
@@ -59,20 +75,24 @@ class GraphicsLibrary:
             return int(buf[0])
         return int(buf)
 
-    def buffer_array_delete(self, index: int) -> None:
-        if index != -1:
-            gl.glDeleteBuffers(1, [int(index)])
+    def buffer_array_delete(self, index: int | None) -> None:
+        if index is None or index == -1:
+            return
+        gl.glDeleteBuffers(1, [int(index)])
 
-    def buffer_array_write(self, index: int, data: Sequence[float]) -> None:
-        if index == -1:
+
+    def buffer_array_write(self, index: int | None, data: Sequence[float]) -> None:
+        if index is None or index == -1:
             return
         arr = np.asarray(data, dtype=np.float32)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, index)
         gl.glBufferData(gl.GL_ARRAY_BUFFER, arr, gl.GL_STATIC_DRAW)
 
-    def buffer_array_bind(self, index: int) -> None:
-        if index != -1:
-            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, index)
+
+    def buffer_array_bind(self, index: int | None) -> None:
+        if index is None or index == -1:
+            return
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, index)
 
     def buffer_array_bind_array_buffer(
         self,
@@ -160,13 +180,31 @@ class GraphicsLibrary:
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE)
 
-    def texture_bind(self, texture: Optional[GraphicsTexture]) -> None:
-        if texture is not None and texture.texture_index != -1:
-            gl.glBindTexture(gl.GL_TEXTURE_2D, int(texture.texture_index))
+    def texture_bind_index(self, texture_index: int | None) -> None:
+        """
+        Bind a texture by index. Treat None and -1 as invalid.
+        """
+        if texture_index is None or texture_index == -1:
+            return
+        gl.glBindTexture(gl.GL_TEXTURE_2D, int(texture_index))
 
-    def texture_delete(self, texture_index: int):
-        if texture_index != -1:
-            gl.glDeleteTextures([texture_index])
+
+    def texture_bind(self, texture: Optional[GraphicsTexture]) -> None:
+        """
+        Bind a texture object.
+        """
+        if texture is not None:
+            self.texture_bind_index(texture.texture_index)
+
+    def texture_delete(self, texture_index: int | None) -> None:
+        """
+        Delete a texture if the index is valid.
+        Treat None and -1 as invalid.
+        Safe to call multiple times.
+        """
+        if texture_index is None or texture_index == -1:
+            return
+        gl.glDeleteTextures(1, [int(texture_index)])
             
     # --- variant that takes a "bitmap" (you decide what that is) ----------
     def texture_generate_from_bitmap(self, bitmap) -> int:
@@ -281,28 +319,36 @@ class GraphicsLibrary:
     # ----------------------------------------------------------------------
     # Linking buffers to shader program (vertex attribs)
     # ----------------------------------------------------------------------
-    def link_buffer_to_shader_program_array_buffer(
+    def link_buffer_to_shader_program(
         self,
         program: Optional[ShaderProgram],
         buffer: Optional[GraphicsArrayBuffer[T]],
     ) -> None:
+        """
+        High-level helper: take a GraphicsArrayBuffer and link its VBO to the program.
+        """
         if buffer is None:
             return
-        self.link_buffer_to_shader_program(program, buffer.buffer_index)
+        self.link_buffer_to_shader_program_index(program, buffer.buffer_index)
 
-    def link_buffer_to_shader_program(
+
+    def link_buffer_to_shader_program_index(
         self,
         program: Optional[ShaderProgram],
-        buffer_index: int,
+        buffer_index: int | None,
     ) -> None:
+        """
+        Low-level helper: bind and configure a VBO by index.
+        Treat None and -1 as invalid.
+        """
         if program is None:
-            print("BAD1")
             return
-        if program.program == 0 or buffer_index == -1:
-            print("BAD2")
+        if program.program == 0:
+            return
+        if buffer_index is None or buffer_index == -1:
             return
 
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, buffer_index)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, int(buffer_index))
         gl.glUseProgram(program.program)
 
         # Position attribute
@@ -316,7 +362,7 @@ class GraphicsLibrary:
                 program.attribute_stride_position,
                 program.attribute_offset_position,
             )
-            
+
         # Texture coordinates attribute
         if program.attribute_location_texture_coordinates != -1:
             gl.glEnableVertexAttribArray(program.attribute_location_texture_coordinates)
@@ -328,6 +374,7 @@ class GraphicsLibrary:
                 program.attribute_stride_texture_coordinates,
                 program.attribute_offset_texture_coordinates,
             )
+
 
     def unlink_buffer_from_shader_program(self, program: Optional[ShaderProgram]) -> None:
         if program is None or program.program == 0:

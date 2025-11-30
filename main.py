@@ -12,23 +12,29 @@ from asset_bundle import AssetBundle
 from pong_scene import PongScene
 
 def framebuffer_size_callback(window, width, height):
-    # Update OpenGL viewport
-
     app_shell = glfw.get_window_user_pointer(window)
     if app_shell:
+        screen_width, screen_height = glfw.get_window_size(window)
+        screen_scale_x, screen_scale_y = glfw.get_window_content_scale(window)
+        frame_buffer_width, frame_buffer_height = glfw.get_framebuffer_size(window)
         if app_shell.scene:
-            if app_shell.scene.graphics:
-                app_shell.scene.graphics.resize(width=width, height=height)
-        app_shell.resize(width, height)
+            scene = app_shell.scene
+            if scene.graphics:
+                graphics = scene.graphics
+                graphics.resize(screen_width=screen_width,
+                                screen_height=screen_height,
+                                screen_scale_x=screen_scale_x,
+                                screen_scale_y=screen_scale_y,
+                                frame_buffer_width=frame_buffer_width,
+                                frame_buffer_height=frame_buffer_height)
+        app_shell.resize()
 
 def key_callback(window, key, scancode, action, mods):
 
-    # --- Modifier detection ----------------------------------------
-    mod_shift = bool(mods & glfw.MOD_SHIFT)
-
     # We treat CTRL and CMD/SUPER as equivalent
+    # On windows, CTRL+C is copy, on mac SUPER+C is copy
     mod_control = bool(mods & (glfw.MOD_CONTROL | glfw.MOD_SUPER))
-
+    mod_shift = bool(mods & glfw.MOD_SHIFT)
     mod_alt = bool(mods & glfw.MOD_ALT)
 
     # --- Forward to AppShell ---------------------------------------
@@ -51,8 +57,7 @@ def key_callback(window, key, scancode, action, mods):
 
     if action == glfw.PRESS and key == glfw.KEY_ESCAPE:
         glfw.set_window_should_close(window, True)
-
-
+    
 def mouse_button_callback(window, button, action, mods):
     # Map GLFW button → our (-1, 0, 1)
     if button == glfw.MOUSE_BUTTON_LEFT:
@@ -63,11 +68,14 @@ def mouse_button_callback(window, button, action, mods):
         mapped_button = 1
     else:
         mapped_button = None  # unknown or extra buttons
-
+    
     xpos, ypos = glfw.get_cursor_pos(window)
-
     app_shell = glfw.get_window_user_pointer(window)
     if app_shell and mapped_button is not None:
+        if app_shell.scene:
+            if app_shell.scene.graphics:
+                xpos *= app_shell.scene.graphics.screen_scale_x
+                ypos *= app_shell.scene.graphics.screen_scale_y
         if action == glfw.PRESS:
             app_shell.mouse_down(
                 button=mapped_button,
@@ -84,6 +92,10 @@ def mouse_button_callback(window, button, action, mods):
 def cursor_pos_callback(window, xpos, ypos):
     app_shell = glfw.get_window_user_pointer(window)
     if app_shell:
+        if app_shell.scene:
+            if app_shell.scene.graphics:
+                xpos *= app_shell.scene.graphics.screen_scale_x
+                ypos *= app_shell.scene.graphics.screen_scale_y
         app_shell.mouse_move(xpos=xpos, ypos=ypos)
 
 def scroll_callback(window, xoffset, yoffset):
@@ -92,18 +104,12 @@ def scroll_callback(window, xoffset, yoffset):
         direction = -1
     elif yoffset < 0:
         direction = 1
-
     app_shell = glfw.get_window_user_pointer(window)
     if app_shell:
         app_shell.mouse_wheel(direction=direction)
 
-# ----------------------------------------------------------------------
-# Main: Textured triangle using vanilla OpenGL + your sprite_2d shaders
-# ----------------------------------------------------------------------
 def main():
-    # --------------------------------------------------------------
-    # Initialize GLFW and create a window / context
-    # --------------------------------------------------------------
+    
     if not glfw.init():
         print("Failed to initialize GLFW")
         sys.exit(1)
@@ -124,10 +130,18 @@ def main():
     
     glfw.make_context_current(window)
 
-    base_dir = Path(__file__).resolve().parent
+    screen_width, screen_height = glfw.get_window_size(window)
+    screen_scale_x, screen_scale_y = glfw.get_window_content_scale(window)
+    frame_buffer_width, frame_buffer_height = glfw.get_framebuffer_size(window)
     
+    base_dir = Path(__file__).resolve().parent
     pipeline = GraphicsPipeline(base_dir / "shaders")
-    graphics = GraphicsLibrary(width=width, height=height)
+    graphics = GraphicsLibrary(screen_width=screen_width,
+                               screen_height=screen_height,
+                               screen_scale_x=screen_scale_x,
+                               screen_scale_y=screen_scale_y,
+                               frame_buffer_width=frame_buffer_width,
+                               frame_buffer_height=frame_buffer_height)
 
     assets = AssetBundle()
     pong_scene = PongScene(graphics=graphics, pipeline=pipeline, assets=assets)
@@ -149,23 +163,18 @@ def main():
     assets.load(graphics=graphics, base_dir=base_dir)
     app_shell.prepare()
 
-    last_time = time.time()
-
+    previous_time = time.time()
     while not glfw.window_should_close(window):
-
         current_time = time.time()
-        dt = current_time - last_time
+        dt = current_time - previous_time
         dt = min(dt, 0.1)
-        last_time = current_time
+        previous_time = current_time
         app_shell.update(dt)
-
         app_shell.draw()
-
         glfw.swap_buffers(window)
         glfw.poll_events()
-    
-    app_shell.dispose()
 
+    app_shell.dispose()
     glfw.terminate()
 
 if __name__ == "__main__":

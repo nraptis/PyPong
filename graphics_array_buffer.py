@@ -1,11 +1,8 @@
 # graphics_array_buffer.py
 
 from __future__ import annotations
-
 from typing import Generic, TypeVar, Optional, Sequence, TYPE_CHECKING
-
 from float_bufferable import FloatBufferable
-
 if TYPE_CHECKING:
     from graphics_library import GraphicsLibrary
 
@@ -69,3 +66,18 @@ class GraphicsArrayBuffer(Generic[T]):
 
         self.vertex_buffer = new_data
         graphics.buffer_array_write(self.buffer_index, self.vertex_buffer)
+
+    def dispose(self) -> None:
+        """
+        Delete the GPU buffer and reset local state.
+        Safe to call multiple times.
+        """
+        if self.graphics is not None:
+            # Delete buffer if valid
+            self.graphics.buffer_array_delete(self.buffer_index)
+
+        # Reset state
+        self.buffer_index = -1
+        self.vertex_buffer.clear()
+        self.size = 0
+        self.graphics = None

@@ -17,6 +17,8 @@ class Ball:
         # Logical state
         self.x = x
         self.y = y
+        self.x_speed = 0
+        self.y_speed = 0
         self.instance = GraphicsSprite2DInstance()
         self.width = float(AssetBundle.ball_width)
         self.height = float(AssetBundle.ball_height)

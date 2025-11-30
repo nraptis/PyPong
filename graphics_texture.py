@@ -40,7 +40,7 @@ class GraphicsTexture:
             return
 
         # If previously loaded, delete old GL texture
-        self.unload()
+        self.dispose()
 
         # Open with PIL
         img = Image.open(self.file_name).convert("RGBA")
@@ -56,7 +56,7 @@ class GraphicsTexture:
     # --------------------------------------------------------------
     # Unload / delete GPU texture
     # --------------------------------------------------------------
-    def unload(self) -> None:
+    def dispose(self) -> None:
         """
         Delete the texture from GPU and reset fields.
         """

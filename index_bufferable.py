@@ -1,13 +1,15 @@
-#index_bufferable.py
+# index_bufferable.py
 
-from abc import ABC, abstractmethod
+from __future__ import annotations
+from typing import Protocol
 
-class IndexBufferable(ABC):
+class IndexBufferable(Protocol):
+    """
+    Any object that can write its index data (int-based) into a buffer.
+    """
 
-    @abstractmethod
     def write_to_buffer(self, buffer) -> None:
-        raise NotImplementedError
+        ...
 
-    @abstractmethod
     def size(self) -> int:
-        raise NotImplementedError
+        ...

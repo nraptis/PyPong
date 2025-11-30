@@ -1,4 +1,4 @@
-# matrix.py
+# graphics_matrix.py
 
 from math import cos, sin, tan, sqrt
 from float_bufferable import FloatBufferable

@@ -16,8 +16,8 @@ class AppShell:
         self.scene.load()
         self.scene.load_complete()
 
-    def resize(self, width: int, height: int) -> None:
-        self.scene.resize(width=width, height=height)
+    def resize(self) -> None:
+        self.scene.resize()
 
     def update(self, dt: float) -> None:
         self.scene.update(dt=dt)

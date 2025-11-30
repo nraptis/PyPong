@@ -1,69 +1,63 @@
 # primitives.py
 
+from __future__ import annotations
 from dataclasses import dataclass
-from abc import ABC, abstractmethod
+from typing import Protocol
 from float_bufferable import FloatBufferable
 
-class ColorConforming(ABC):
+# -------------------------------------------------------------
+# Protocols
+# -------------------------------------------------------------
+
+class ColorConforming(Protocol):
     @property
-    @abstractmethod
     def r(self) -> float: ...
     @r.setter
-    @abstractmethod
-    def r(self, value: float): ...
+    def r(self, value: float) -> None: ...
 
     @property
-    @abstractmethod
     def g(self) -> float: ...
     @g.setter
-    @abstractmethod
-    def g(self, value: float): ...
+    def g(self, value: float) -> None: ...
 
     @property
-    @abstractmethod
     def b(self) -> float: ...
     @b.setter
-    @abstractmethod
-    def b(self, value: float): ...
+    def b(self, value: float) -> None: ...
 
     @property
-    @abstractmethod
     def a(self) -> float: ...
     @a.setter
-    @abstractmethod
-    def a(self, value: float): ...
+    def a(self, value: float) -> None: ...
 
 
-class PositionConforming2D(ABC):
+class PositionConforming2D(Protocol):
     @property
-    @abstractmethod
     def x(self) -> float: ...
     @x.setter
-    @abstractmethod
-    def x(self, value: float): ...
+    def x(self, value: float) -> None: ...
 
     @property
-    @abstractmethod
     def y(self) -> float: ...
     @y.setter
-    @abstractmethod
-    def y(self, value: float): ...
+    def y(self, value: float) -> None: ...
 
 
-class TextureCoordinateConforming(ABC):
+class TextureCoordinateConforming(Protocol):
     @property
-    @abstractmethod
     def u(self) -> float: ...
     @u.setter
-    @abstractmethod
-    def u(self, value: float): ...
+    def u(self, value: float) -> None: ...
 
     @property
-    @abstractmethod
     def v(self) -> float: ...
     @v.setter
-    @abstractmethod
-    def v(self, value: float): ...
+    def v(self, value: float) -> None: ...
+
+
+# -------------------------------------------------------------
+# Concrete vertex dataclasses (auto-conform via structural typing)
+# -------------------------------------------------------------
 
 @dataclass
 class Shape2DVertex(PositionConforming2D, FloatBufferable):
@@ -77,8 +71,13 @@ class Shape2DVertex(PositionConforming2D, FloatBufferable):
     def size(self):
         return 2
 
+
 @dataclass
-class Shape2DColoredVertex(PositionConforming2D, ColorConforming, FloatBufferable):
+class Shape2DColoredVertex(
+    PositionConforming2D,
+    ColorConforming,
+    FloatBufferable
+):
     x: float = 0.0
     y: float = 0.0
     r: float = 1.0
@@ -99,7 +98,11 @@ class Shape2DColoredVertex(PositionConforming2D, ColorConforming, FloatBufferabl
 
 
 @dataclass
-class Sprite2DVertex(PositionConforming2D, TextureCoordinateConforming, FloatBufferable):
+class Sprite2DVertex(
+    PositionConforming2D,
+    TextureCoordinateConforming,
+    FloatBufferable
+):
     x: float = 0.0
     y: float = 0.0
     u: float = 0.0

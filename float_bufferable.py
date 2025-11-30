@@ -1,13 +1,15 @@
 # float_bufferable.py
 
-from abc import ABC, abstractmethod
+from __future__ import annotations
+from typing import Protocol
 
-class FloatBufferable(ABC):
-    
-    @abstractmethod
+class FloatBufferable(Protocol):
+    """
+    Any object that can write its float data into a buffer.
+    """
+
     def write_to_buffer(self, buffer) -> None:
-        raise NotImplementedError
+        ...
 
-    @abstractmethod
     def size(self) -> int:
-        raise NotImplementedError
+        ...
