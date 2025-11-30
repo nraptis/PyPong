@@ -8,6 +8,8 @@ from graphics_array_buffer import GraphicsArrayBuffer
 from graphics_library import GraphicsLibrary
 from graphics_pipeline import GraphicsPipeline
 from graphics_matrix import GraphicsMatrix
+from paddle import Paddle
+from ball import Ball
 
 class PongScene(GraphicsScene):
     """
@@ -15,9 +17,14 @@ class PongScene(GraphicsScene):
     Prints function calls (except update, draw, mouse_move).
     """
 
+    paddle_inset: int = 34
+
     def __init__(self, graphics, pipeline, assets: AssetBundle) -> None:
         super().__init__(graphics, pipeline)
         self.assets = assets
+        self.ball = Ball(x=float(graphics.width) / 2.0, y=float(graphics.height) / 2.0)
+        self.left_paddle = Paddle(x=0.0 + float(PongScene.paddle_inset), y=float(graphics.height) / 2.0)
+        self.right_paddle = Paddle(x=graphics.width - float(PongScene.paddle_inset), y=float(graphics.height) / 2.0)
 
     # --------------------------------------------------------------
     # Lifecycle
@@ -45,6 +52,11 @@ class PongScene(GraphicsScene):
         self.sprite_indices = [0, 1, 2, 3]
         self.sprite_index_buffer = self.graphics.buffer_index_generate_from_int_array(self.sprite_indices)
 
+
+        self.left_paddle.load(self.assets, self.graphics)
+        self.right_paddle.load(self.assets, self.graphics)
+        self.ball.load(self.assets, self.graphics)
+
     def load_complete(self) -> None:
         print("PongScene.load_complete()")
 
@@ -57,7 +69,10 @@ class PongScene(GraphicsScene):
 
     def update(self, dt: float) -> None:
         # No prints here
-        pass
+        self.left_paddle.update(dt=dt)
+        self.right_paddle.update(dt=dt)
+        self.ball.update(dt=dt)
+        
 
     def draw(self) -> None:
 
@@ -68,8 +83,8 @@ class PongScene(GraphicsScene):
         
 
         # No prints here
-        projection = GraphicsMatrix()
-        projection.ortho_size(width=width, height=height)
+        projection_matrix = GraphicsMatrix()
+        projection_matrix.ortho_size(width=width, height=height)
 
         model_view = GraphicsMatrix()
         model_view.translate(x=width/2, y=height/2, z=0.0)
@@ -83,9 +98,13 @@ class PongScene(GraphicsScene):
         self.graphics.link_buffer_to_shader_program_array_buffer(sprite_prog, self.sprite_vertex_buffer)
         self.graphics.uniforms_texture_set_sprite(program=sprite_prog, sprite=self.assets.ball_sprite)
         self.graphics.uniforms_modulate_color_set(sprite_prog, r=1.0, g=1.0, b=0.5, a=0.5)
-        self.graphics.uniforms_matrices_set(sprite_prog, projection, model_view)
+        self.graphics.uniforms_matrices_set(sprite_prog, projection_matrix, model_view)
         self.graphics.draw_primitives(index_buffer=self.sprite_index_buffer, primitive_type=gl.GL_TRIANGLE_STRIP, count=4)
         self.graphics.unlink_buffer_from_shader_program(sprite_prog)
+        
+        self.left_paddle.draw(graphics=self.graphics, pipeline=self.pipeline, projection_matrix=projection_matrix)
+        self.right_paddle.draw(graphics=self.graphics, pipeline=self.pipeline, projection_matrix=projection_matrix)
+        self.ball.draw(graphics=self.graphics, pipeline=self.pipeline, projection_matrix=projection_matrix)
 
 
     # --------------------------------------------------------------

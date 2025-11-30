@@ -7,20 +7,15 @@ from graphics_texture import GraphicsTexture
 class GraphicsSprite:
     def __init__(self) -> None:
         self.texture: Optional[GraphicsTexture] = None
-
         self.width: float = 0.0
         self.width2: float = 0.0
-
         self.height: float = 0.0
         self.height2: float = 0.0
-
         self.scale_factor: float = 1.0
-
         self.start_x: float = -64.0
         self.start_y: float = -64.0
         self.end_x: float = 64.0
         self.end_y: float = 64.0
-
         self.start_u: float = 0.0
         self.start_v: float = 0.0
         self.end_u: float = 1.0

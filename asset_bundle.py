@@ -6,11 +6,20 @@ from graphics_texture import GraphicsTexture
 from graphics_sprite import GraphicsSprite
 
 class AssetBundle:
+
+    # class-level (static) constants
+    paddle_width: int = 48
+    paddle_height: int = 228
+
+    # class-level (static) constants
+    ball_width: int = 48
+    ball_height: int = 48
+
     def __init__(self) -> None:
         # Sprites
         self.ball_sprite: GraphicsSprite | None = None
         self.paddle_sprite: GraphicsSprite | None = None
-        self.digit_sprites: dict[int, GraphicsSprite] = {}
+        self.digit_table: dict[int, GraphicsSprite] = {}
 
         # Textures
         self.wall_texture: GraphicsTexture | None = None
@@ -46,7 +55,7 @@ class AssetBundle:
             spr.load(graphics=graphics, texture=tex)
             spr.print()
 
-            self.digit_sprites[i] = spr
+            self.digit_table[i] = spr
 
         # --------------------------------------------------------------
         # paddle.png → sprite
