@@ -73,10 +73,9 @@ class PongNet:
         pipeline: GraphicsPipeline,
         projection_matrix: GraphicsMatrix,
     ) -> None:
-        for seg in self.net_instances:
-            seg.projection_matrix.make_matrix(projection_matrix)
-            #seg.model_view_matrix.reset()
-            seg.render(pipeline.program_shape2d)
+        for instance in self.net_instances:
+            instance.projection_matrix = projection_matrix.copy()
+            instance.render(pipeline.program_shape2d)
 
     # ------------------------------------------------------------------
     # Dispose

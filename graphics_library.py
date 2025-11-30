@@ -30,6 +30,7 @@ class GraphicsLibrary:
         self.screen_scale_y = screen_scale_y
         self.frame_buffer_width = frame_buffer_width
         self.frame_buffer_height = frame_buffer_height
+        gl.glViewport(0, 0, frame_buffer_width, frame_buffer_height)
         self.texture_set_filter_linear()
         self.texture_set_clamp()
 
@@ -47,8 +48,6 @@ class GraphicsLibrary:
         self.frame_buffer_width = frame_buffer_width
         self.frame_buffer_height = frame_buffer_height
         gl.glViewport(0, 0, frame_buffer_width, frame_buffer_height)
-        print("g resized screen", screen_width, "and", screen_height, ", scale ", screen_scale_x, "and", screen_scale_y, "frame buffer", frame_buffer_width, "and", frame_buffer_height)
-
 
     def clear(self) -> None:
         gl.glClearColor(0.0, 0.0, 0.0, 1.0)
@@ -70,10 +69,14 @@ class GraphicsLibrary:
     # ----------------------------------------------------------------------
 
     def buffer_array_generate(self) -> int:
-        buf = gl.glGenBuffers(1)
-        if isinstance(buf, (list, tuple)):
-            return int(buf[0])
-        return int(buf)
+        buf_id = gl.glGenBuffers(1)
+        if isinstance(buf_id, (list, tuple)):
+
+            print("Generating Array Buffer @", buf_id[0])
+            return int(buf_id[0])
+        
+        print("Generating Array Buffer @", buf_id)
+        return int(buf_id)
 
     def buffer_array_delete(self, index: int | None) -> None:
         if index is None:
@@ -91,7 +94,7 @@ class GraphicsLibrary:
         if idx == -1:
             return
 
-        print("Deleting Buffer @", idx)
+        print("Deleting Array Buffer @", idx)
         gl.glDeleteBuffers(1, [idx])
 
     def buffer_array_write(self, index: int | None, data: Sequence[float]) -> None:
@@ -132,16 +135,16 @@ class GraphicsLibrary:
         count = min(count, len(values), index_buffer.size)
         index_buffer[:count] = np.asarray(values[:count], dtype=np.uint32)
 
-    def buffer_index_generate_from_int_array(self, values: Sequence[int]) -> np.ndarray:
-        return self.buffer_index_generate_from_list(values)
-    
     def buffer_index_delete(self, index: int | None) -> None:
-        self.buffer_array_delete(index)
-
+        """
+        Index buffers are client-side NumPy arrays, not GL buffers.
+        Deletion is a no-op.
+        """
+        return
+    
     # ----------------------------------------------------------------------
     # Float buffers (for FloatBufferable -> list[float])
     # ----------------------------------------------------------------------
-
     def buffer_float_size(self, items: Sequence[T]) -> int:
         if not items:
             return 0
@@ -264,6 +267,8 @@ class GraphicsLibrary:
             gl.GL_UNSIGNED_BYTE,
             data,
         )
+
+        print("Generating Texture @", tex_id)
         return tex_id
 
     # --- variant that creates a random RGBA texture -----------------------

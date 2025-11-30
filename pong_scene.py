@@ -40,7 +40,7 @@ class PongScene(GraphicsScene):
         self.reset_paddles()
 
         self.dead_timer = float(0.0)
-        self.dead_time = float(2.0)
+        self.dead_time = float(4.0)
 
         self.calculate_bounds()
         self.state = PongState.Idle
@@ -103,22 +103,23 @@ class PongScene(GraphicsScene):
         width = float(self.graphics.frame_buffer_width)
         height = float(self.graphics.frame_buffer_height)
 
-        # No prints here
         projection_matrix = GraphicsMatrix()
         projection_matrix.ortho_size(width=width, height=height)
 
         self.graphics.clear_rgb(0.04, 0.04, 0.08)
 
+        self.graphics.blend_set_disabled()
+        
+        self.net.draw(graphics=self.graphics, pipeline=self.pipeline, projection_matrix=projection_matrix)
+        
         self.graphics.blend_set_alpha()
-
+        
         self.number_left.draw(graphics=self.graphics, pipeline=self.pipeline, projection_matrix=projection_matrix)
         self.number_right.draw(graphics=self.graphics, pipeline=self.pipeline, projection_matrix=projection_matrix)
         
         self.left_paddle.draw(graphics=self.graphics, pipeline=self.pipeline, projection_matrix=projection_matrix)
         self.right_paddle.draw(graphics=self.graphics, pipeline=self.pipeline, projection_matrix=projection_matrix)
         self.ball.draw(graphics=self.graphics, pipeline=self.pipeline, projection_matrix=projection_matrix)
-
-        self.net.draw(graphics=self.graphics, pipeline=self.pipeline, projection_matrix=projection_matrix)
 
     # --------------------------------------------------------------
     # Input
@@ -134,12 +135,10 @@ class PongScene(GraphicsScene):
         self.mouse_x = xpos
         self.mouse_y = ypos
         
-
     def mouse_move(self, xpos: float, ypos: float) -> None:
         self.mouse_x = xpos
         self.mouse_y = ypos
-        
-
+    
     def mouse_wheel(self, direction: int) -> None:
         print(f"PongScene.mouse_wheel(direction={direction})")
 
@@ -200,10 +199,16 @@ class PongScene(GraphicsScene):
         paddle_width = float(self.assets.paddle_width)
         paddle_width_2 = paddle_width / 2.0
         paddle_height = float(self.assets.paddle_height)
+        paddle_height_2 = paddle_height / 2.0
+        paddle_inset = float(PongScene.paddle_inset)
         self.top = ball_height_2
         self.bottom = height - ball_height_2
         self.left = ball_width_2
         self.right = width - ball_width_2
+        self.paddle_top = paddle_height_2
+        self.paddle_bottom = height - paddle_height_2
+        self.paddle_left = paddle_inset + paddle_width_2 + ball_width_2
+        self.paddle_right = width - paddle_inset - paddle_width_2 - ball_width_2
 
     def reset_numbers(self):
         graphics = self.graphics
@@ -237,10 +242,16 @@ class PongScene(GraphicsScene):
         self.state = PongState.Idle
         self.rebuild_number_left(0)
         self.rebuild_number_right(0)
+        self.left_paddle.is_red = False
+        self.right_paddle.is_red = False
+        self.ball.is_red = False
 
     def dead(self):
         self.state = PongState.Dead
         self.dead_timer = 0.0
+        self.left_paddle.is_red = True
+        self.right_paddle.is_red = True
+        self.ball.is_red = True
 
     def update_idle(self, dt: float) -> None:
         self.reset_ball()
@@ -249,33 +260,96 @@ class PongScene(GraphicsScene):
         self.right_score = 0
 
     def update_play(self, dt: float) -> None:
+
+        width = float(self.graphics.frame_buffer_width)
+        height = float(self.graphics.frame_buffer_height)
+
+        paddle_track_strength = max(width, height) * 0.25
+
+        paddle_factor_multiply = float(4.0)
+        paddle_factor_add = float(200.0)
+        
+        if self.left_paddle.y < self.mouse_y:
+            amount = (self.mouse_y - self.left_paddle.y) * dt * paddle_factor_multiply + paddle_factor_add * dt
+            self.left_paddle.y += amount
+            if self.left_paddle.y > self.mouse_y:
+                self.left_paddle.y = self.mouse_y
+
+        elif self.left_paddle.y > self.mouse_y:
+            amount = (self.left_paddle.y - self.mouse_y) * dt * paddle_factor_multiply + paddle_factor_add * dt
+            self.left_paddle.y -= amount
+            if self.left_paddle.y < self.mouse_y:
+                self.left_paddle.y = self.mouse_y
+
+        if self.left_paddle.y > self.paddle_bottom:
+            self.left_paddle.y = self.paddle_bottom
+        
+        if self.left_paddle.y < self.paddle_top:
+            self.left_paddle.y = self.paddle_top
+
+        if self.right_paddle.y < self.ball.y:
+            amount = (self.ball.y - self.right_paddle.y) * dt * paddle_factor_multiply + paddle_factor_add * dt
+            self.right_paddle.y += amount
+            if self.right_paddle.y > self.ball.y:
+                self.right_paddle.y = self.ball.y
+
+        elif self.right_paddle.y > self.ball.y:
+            amount = (self.right_paddle.y - self.ball.y) * dt * paddle_factor_multiply + paddle_factor_add * dt
+            self.right_paddle.y -= amount
+            if self.right_paddle.y < self.ball.y:
+                self.right_paddle.y = self.ball.y
+
+        if self.right_paddle.y > self.paddle_bottom:
+            self.right_paddle.y = self.paddle_bottom
+        
+        if self.right_paddle.y < self.paddle_top:
+            self.right_paddle.y = self.paddle_top
         
         self.ball.x += self.ball.x_speed * dt
+        self.ball.y += self.ball.y_speed * dt
+        
+        if self.ball.y <= self.top:
+            self.ball.y_speed = self.select_speed()
+        if self.ball.y >= self.bottom:
+            self.ball.y_speed = -self.select_speed()
+        
+        if self.ball.x_speed < 0.0 and self.vertical_overlap(self.left_paddle):
+            if self.ball.x <= self.paddle_left:
+                self.ball.x_speed = self.select_speed()
+                self.left_score += 1
+                self.rebuild_number_left(self.left_score)
+                
+        if self.ball.x_speed > 0.0 and self.vertical_overlap(self.right_paddle):
+            if self.ball.x >= self.paddle_right:
+                self.ball.x_speed = -self.select_speed()
+                self.right_score += 1
+                self.rebuild_number_right(self.right_score)
 
         if self.ball.x <= self.left:
-            self.ball.x = self.left
-            self.ball.x_speed = self.select_speed()
-            self.rebuild_number_left(self.left_score + random.randint(10, 100))
-            
+            self.dead()
+            return
+        
         if self.ball.x >= self.right:
-            self.ball.x = self.right
-            self.ball.x_speed = -self.select_speed()
-            self.rebuild_number_right(self.right_score + random.randint(10, 100))
-            
+            self.dead()
+            return
 
+    def vertical_overlap(self, paddle: Paddle) -> bool:
+        top = paddle.y - (paddle.height / 2.0) - (self.ball.height / 2.0)
+        bottom = paddle.y + (paddle.height / 2.0) + (self.ball.height / 2.0)
+        if self.ball.y >= top and self.ball.y <= bottom:
+            return True
+        else:
+            return False
+        
     def update_dead(self, dt: float) -> None:
-        self.reset_ball()
-        self.reset_paddles()
         self.dead_timer += dt
         if self.dead_timer >= self.dead_time:
             self.idle()
 
     def rebuild_number_left(self, new_score: int) -> None:
-        self.left_score = new_score
         self.number_left.rebuild(new_score, self.graphics, self.assets)
     
     def rebuild_number_right(self, new_score: int) -> None:
-        self.right_score = new_score
         self.number_right.rebuild(new_score, self.graphics, self.assets)
 
         

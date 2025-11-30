@@ -7,6 +7,7 @@ from graphics_sprite import GraphicsSprite
 from graphics_pipeline import GraphicsPipeline
 from graphics_matrix import GraphicsMatrix
 from graphics_sprite_2d_instance import GraphicsSprite2DInstance
+from graphics_color import GraphicsColor
 
 class Paddle:
     def __init__(
@@ -20,6 +21,7 @@ class Paddle:
         self.instance = GraphicsSprite2DInstance()
         self.width = float(AssetBundle.paddle_width)
         self.height = float(AssetBundle.paddle_height)
+        self.is_red = False
 
     # ------------------------------------------------------------------
     # Lifecycle: load
@@ -52,6 +54,12 @@ class Paddle:
         model_view_matrix.translation(x=self.x, y=self.y, z=0.0)
         self.instance.projection_matrix = projection_matrix
         self.instance.model_view_matrix = model_view_matrix
+
+        if self.is_red:
+            self.instance.color = GraphicsColor(1.0, 0.25, 0.25, 1.0)
+        else:
+            self.instance.color = GraphicsColor(1.0, 1.0, 1.0, 1.0)
+
         self.instance.render(shader_program=pipeline.program_sprite2d)
 
     # ------------------------------------------------------------------
