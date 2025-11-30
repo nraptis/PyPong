@@ -1,12 +1,9 @@
 # graphics_library.py
 
 from __future__ import annotations
-
 from typing import Optional, Sequence, TypeVar
-
 import numpy as np
 from OpenGL import GL as gl
-
 from float_bufferable import FloatBufferable
 from graphics_array_buffer import GraphicsArrayBuffer
 from graphics_texture import GraphicsTexture
@@ -29,6 +26,12 @@ class GraphicsLibrary:
         self.heightf: float = float(height)
         self.texture_set_filter_linear()
         self.texture_set_clamp()
+
+    def resize(self, width: int, height: int) -> None:
+        self.width = width
+        self.height = height
+        gl.glViewport(0, 0, width, height)
+        print("g resuz", width, "and", height)
 
 
     def clear(self) -> None:

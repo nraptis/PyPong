@@ -36,17 +36,14 @@ class GraphicsMatrix(FloatBufferable):
         self.m[1]  = float(m01)
         self.m[2]  = float(m02)
         self.m[3]  = float(m03)
-
         self.m[4]  = float(m10)
         self.m[5]  = float(m11)
         self.m[6]  = float(m12)
         self.m[7]  = float(m13)
-
         self.m[8]  = float(m20)
         self.m[9]  = float(m21)
         self.m[10] = float(m22)
         self.m[11] = float(m23)
-
         self.m[12] = float(m30)
         self.m[13] = float(m31)
         self.m[14] = float(m32)
