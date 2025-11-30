@@ -71,7 +71,6 @@ class Shape2DVertex(PositionConforming2D, FloatBufferable):
     def size(self):
         return 2
 
-
 @dataclass
 class Shape2DColoredVertex(
     PositionConforming2D,

@@ -1,4 +1,5 @@
 # main.py
+
 import sys
 import ctypes
 from pathlib import Path
@@ -142,7 +143,7 @@ def main():
                                screen_scale_y=screen_scale_y,
                                frame_buffer_width=frame_buffer_width,
                                frame_buffer_height=frame_buffer_height)
-
+    
     assets = AssetBundle()
     pong_scene = PongScene(graphics=graphics, pipeline=pipeline, assets=assets)
     app_shell = AppShell(scene=pong_scene)
@@ -175,6 +176,7 @@ def main():
         glfw.poll_events()
 
     app_shell.dispose()
+    assets.dispose()
     glfw.terminate()
 
 if __name__ == "__main__":

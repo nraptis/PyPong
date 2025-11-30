@@ -2,6 +2,8 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
+from graphics_library import GraphicsLibrary
+from graphics_pipeline import GraphicsPipeline
 
 class GraphicsScene(ABC):
     """
@@ -12,10 +14,9 @@ class GraphicsScene(ABC):
         pipeline: GraphicsPipeline
     """
 
-    def __init__(self, graphics: Any, pipeline: Any) -> None:
+    def __init__(self, graphics: GraphicsLibrary, pipeline: GraphicsPipeline) -> None:
         # You can replace Any with concrete types if you want, e.g.:
-        # from graphics_library import GraphicsLibrary
-        # from graphics_pipeline import GraphicsPipeline
+        
         # def __init__(self, graphics: GraphicsLibrary, pipeline: GraphicsPipeline)
         self.graphics = graphics
         self.pipeline = pipeline

@@ -55,3 +55,9 @@ class Ball:
         self.instance.projection_matrix = projection_matrix
         self.instance.model_view_matrix = model_view_matrix
         self.instance.render(shader_program=pipeline.program_sprite2d)
+
+    # ------------------------------------------------------------------
+    # Dispose
+    # ------------------------------------------------------------------
+    def dispose(self) -> None:
+        self.instance.dispose()

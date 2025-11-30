@@ -10,6 +10,7 @@ from PIL import Image
 import numpy as np
 from OpenGL import GL as gl
 
+
 class GraphicsTexture:
     def __init__(
         self,
@@ -51,7 +52,13 @@ class GraphicsTexture:
         bitmap = np.array(img, dtype=np.uint8)
 
         # Use GraphicsLibrary to create GL texture
-        self.texture_index = self.graphics.texture_generate_from_bitmap(bitmap)
+        texture_index = self.graphics.texture_generate_from_bitmap(bitmap)
+        # Normalize to plain Python int in case it's a numpy scalar/array
+        try:
+            self.texture_index = int(texture_index)
+        except Exception:
+            # If something weird comes back, treat as "no texture"
+            self.texture_index = -1
 
     # --------------------------------------------------------------
     # Unload / delete GPU texture
@@ -59,8 +66,12 @@ class GraphicsTexture:
     def dispose(self) -> None:
         """
         Delete the texture from GPU and reset fields.
+        Safe to call multiple times.
         """
-        self.graphics.texture_delete(self.texture_index)
+        if self.graphics is not None and self.texture_index is not None:
+            # texture_delete already guards None / -1 and weird types
+            self.graphics.texture_delete(self.texture_index)
+
         self.texture_index = -1
         self.width = 0
         self.height = 0

@@ -76,10 +76,23 @@ class GraphicsLibrary:
         return int(buf)
 
     def buffer_array_delete(self, index: int | None) -> None:
-        if index is None or index == -1:
+        if index is None:
             return
-        gl.glDeleteBuffers(1, [int(index)])
 
+        # --- Robust conversion to Python int ---
+        try:
+            # Handles: np.array([23]), np.uint32(23), plain int, etc.
+            idx = int(index)
+        except Exception:
+            # If index is something unexpected: treat as "no buffer"
+            return
+        
+        # Now safe to check
+        if idx == -1:
+            return
+
+        print("Deleting Buffer @", idx)
+        gl.glDeleteBuffers(1, [idx])
 
     def buffer_array_write(self, index: int | None, data: Sequence[float]) -> None:
         if index is None or index == -1:
@@ -121,6 +134,9 @@ class GraphicsLibrary:
 
     def buffer_index_generate_from_int_array(self, values: Sequence[int]) -> np.ndarray:
         return self.buffer_index_generate_from_list(values)
+    
+    def buffer_index_delete(self, index: int | None) -> None:
+        self.buffer_array_delete(index)
 
     # ----------------------------------------------------------------------
     # Float buffers (for FloatBufferable -> list[float])
@@ -188,7 +204,6 @@ class GraphicsLibrary:
             return
         gl.glBindTexture(gl.GL_TEXTURE_2D, int(texture_index))
 
-
     def texture_bind(self, texture: Optional[GraphicsTexture]) -> None:
         """
         Bind a texture object.
@@ -199,12 +214,23 @@ class GraphicsLibrary:
     def texture_delete(self, texture_index: int | None) -> None:
         """
         Delete a texture if the index is valid.
+        Accepts None, Python ints, NumPy ints, or 1-element NumPy arrays.
         Treat None and -1 as invalid.
         Safe to call multiple times.
         """
-        if texture_index is None or texture_index == -1:
+        if texture_index is None:
             return
-        gl.glDeleteTextures(1, [int(texture_index)])
+        
+        try:
+            idx = int(texture_index)
+        except Exception:
+            return
+
+        if idx == -1:
+            return
+
+        print("Deleting Texture @", idx)
+        gl.glDeleteTextures(1, [idx])
             
     # --- variant that takes a "bitmap" (you decide what that is) ----------
     def texture_generate_from_bitmap(self, bitmap) -> int:

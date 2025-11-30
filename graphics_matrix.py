@@ -49,6 +49,11 @@ class GraphicsMatrix(FloatBufferable):
         self.m[14] = float(m32)
         self.m[15] = float(m33)
 
+    def copy(self) -> "GraphicsMatrix":
+        m = GraphicsMatrix()
+        m.m = self.m[:]
+        return m
+
     def make_matrix(self, other: "GraphicsMatrix") -> None:
         self.m[:] = other.m[:]
 
