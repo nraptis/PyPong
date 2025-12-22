@@ -3,12 +3,12 @@
 from __future__ import annotations
 from typing import List
 
-from graphics_library import GraphicsLibrary
-from graphics_pipeline import GraphicsPipeline
-from graphics_matrix import GraphicsMatrix
-from graphics_color import GraphicsColor
-from graphics_shape_2d_instance import GraphicsShape2DInstance
-from shader_program import ShaderProgram
+from graphics.graphics_library import GraphicsLibrary
+from graphics.graphics_pipeline import GraphicsPipeline
+from graphics.graphics_matrix import GraphicsMatrix
+from graphics.graphics_color import GraphicsColor
+from graphics.graphics_shape_2d_instance import GraphicsShape2DInstance
+from graphics.shader_program import ShaderProgram
 
 class PongNet:
     def __init__(self) -> None:
@@ -75,7 +75,7 @@ class PongNet:
     ) -> None:
         for instance in self.net_instances:
             instance.projection_matrix = projection_matrix.copy()
-            instance.render(pipeline.program_shape2d)
+            instance.render(pipeline.program_shape_2d)
 
     # ------------------------------------------------------------------
     # Dispose

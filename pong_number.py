@@ -3,13 +3,13 @@
 from __future__ import annotations
 from typing import List
 
-from graphics_library import GraphicsLibrary
-from graphics_pipeline import GraphicsPipeline
-from graphics_matrix import GraphicsMatrix
-from graphics_sprite_2d_instance import GraphicsSprite2DInstance
+from graphics.graphics_library import GraphicsLibrary
+from graphics.graphics_pipeline import GraphicsPipeline
+from graphics.graphics_matrix import GraphicsMatrix
+from graphics.graphics_sprite_2d_instance import GraphicsSprite2DInstance
 from asset_bundle import AssetBundle
-from graphics_texture import GraphicsTexture
-from shader_program import ShaderProgram
+from graphics.graphics_texture import GraphicsTexture
+from graphics.shader_program import ShaderProgram
 
 class PongNumber:
     # Horizontal spacing per digit in screen units
@@ -54,7 +54,7 @@ class PongNumber:
         for i, instance in enumerate(self.digit_instances):
             instance.projection_matrix = projection_matrix.copy()
             instance.model_view_matrix.translation(self.x + offset_x, self.y, 0.0)
-            instance.render(pipeline.program_sprite2d)
+            instance.render(pipeline.program_sprite_2d)
             offset_x += float(PongNumber.digit_width)
 
     # ------------------------------------------------------------------

@@ -1,15 +1,15 @@
 # pong_scene.py
 from __future__ import annotations
 from OpenGL import GL as gl
-from graphics_scene import GraphicsScene
+from graphics.graphics_scene import GraphicsScene
 from asset_bundle import AssetBundle
-from primitives import Sprite2DVertex
-from graphics_array_buffer import GraphicsArrayBuffer
-from graphics_library import GraphicsLibrary
-from graphics_pipeline import GraphicsPipeline
-from graphics_matrix import GraphicsMatrix
-from graphics_color import GraphicsColor
-from graphics_shape_2d_instance import GraphicsShape2DInstance
+from graphics.graphics_primitives import Sprite2DVertex
+from graphics.graphics_array_buffer import GraphicsArrayBuffer
+from graphics.graphics_library import GraphicsLibrary
+from graphics.graphics_pipeline import GraphicsPipeline
+from graphics.graphics_matrix import GraphicsMatrix
+from graphics.graphics_color import GraphicsColor
+from graphics.graphics_shape_2d_instance import GraphicsShape2DInstance
 from paddle import Paddle
 from ball import Ball
 from pong_state import PongState
@@ -97,8 +97,8 @@ class PongScene(GraphicsScene):
         
     def draw(self) -> None:
 
-        shape_program = self.pipeline.program_shape2d
-        sprite_program = self.pipeline.program_sprite2d
+        shape_program = self.pipeline.program_shape_2d
+        sprite_program = self.pipeline.program_sprite_2d
 
         width = float(self.graphics.frame_buffer_width)
         height = float(self.graphics.frame_buffer_height)

@@ -3,9 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional
 
-from graphics_texture import GraphicsTexture
-from graphics_sprite import GraphicsSprite
-from graphics_library import GraphicsLibrary
+from graphics.graphics_texture import GraphicsTexture
+from graphics.graphics_sprite import GraphicsSprite
+from graphics.graphics_library import GraphicsLibrary
 
 class AssetBundle:
 
@@ -34,18 +34,16 @@ class AssetBundle:
     # ------------------------------------------------------------------
     # Initial load: create texture + sprite instances
     # ------------------------------------------------------------------
-    def load(self, graphics: GraphicsLibrary, base_dir: Path) -> None:
-        images = base_dir / "images"
-
+    def load(self, graphics: GraphicsLibrary) -> None:
+        
         # --------------------------------------------------------------
         # ball.png → texture + sprite
         # --------------------------------------------------------------
-        ball_path = images / "ball.png"
-        self.ball_texture = GraphicsTexture(graphics=graphics, file_name=ball_path)
+        self.ball_texture = GraphicsTexture(graphics=graphics, subdirectory="images", name="ball")
         self.ball_texture.print()
 
         self.ball_sprite = GraphicsSprite()
-        self.ball_sprite.load(graphics=graphics, texture=self.ball_texture)
+        self.ball_sprite.load(texture=self.ball_texture)
         self.ball_sprite.print()
 
         # --------------------------------------------------------------
@@ -55,13 +53,12 @@ class AssetBundle:
         self.digit_table.clear()
 
         for i in range(10):
-            digit_path = images / f"digit_{i}.png"
-            tex = GraphicsTexture(graphics=graphics, file_name=digit_path)
+            tex = GraphicsTexture(graphics=graphics, subdirectory="images", name=f"digit_{i}.png")
             tex.print()
             self.digit_textures.append(tex)
 
             spr = GraphicsSprite()
-            spr.load(graphics=graphics, texture=tex)
+            spr.load(texture=tex)
             spr.print()
 
             self.digit_table[i] = spr
@@ -69,19 +66,17 @@ class AssetBundle:
         # --------------------------------------------------------------
         # paddle.png → texture + sprite
         # --------------------------------------------------------------
-        paddle_path = images / "paddle.png"
-        self.paddle_texture = GraphicsTexture(graphics=graphics, file_name=paddle_path)
+        self.paddle_texture = GraphicsTexture(graphics=graphics, subdirectory="images", name="paddle")
         self.paddle_texture.print()
 
         self.paddle_sprite = GraphicsSprite()
-        self.paddle_sprite.load(graphics=graphics, texture=self.paddle_texture)
+        self.paddle_sprite.load(texture=self.paddle_texture)
         self.paddle_sprite.print()
 
         # --------------------------------------------------------------
         # wall.png → texture only
         # --------------------------------------------------------------
-        wall_path = images / "wall.png"
-        self.wall_texture = GraphicsTexture(graphics=graphics, file_name=wall_path)
+        self.wall_texture = GraphicsTexture(graphics=graphics, subdirectory="images", name="wall")
         self.wall_texture.print()
         
         self.loaded = True

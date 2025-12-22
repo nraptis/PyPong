@@ -6,9 +6,9 @@ from pathlib import Path
 import glfw
 from OpenGL import GL as gl
 import time
-from app_shell import AppShell
-from graphics_pipeline import GraphicsPipeline
-from graphics_library import GraphicsLibrary
+from graphics.graphics_app_shell import GraphicsAppShell
+from graphics.graphics_pipeline import GraphicsPipeline
+from graphics.graphics_library import GraphicsLibrary
 from asset_bundle import AssetBundle
 from pong_scene import PongScene
 
@@ -135,8 +135,7 @@ def main():
     screen_scale_x, screen_scale_y = glfw.get_window_content_scale(window)
     frame_buffer_width, frame_buffer_height = glfw.get_framebuffer_size(window)
     
-    base_dir = Path(__file__).resolve().parent
-    pipeline = GraphicsPipeline(base_dir / "shaders")
+    pipeline = GraphicsPipeline()
     graphics = GraphicsLibrary(screen_width=screen_width,
                                screen_height=screen_height,
                                screen_scale_x=screen_scale_x,
@@ -146,7 +145,7 @@ def main():
     
     assets = AssetBundle()
     pong_scene = PongScene(graphics=graphics, pipeline=pipeline, assets=assets)
-    app_shell = AppShell(scene=pong_scene)
+    app_shell = GraphicsAppShell(scene=pong_scene)
 
     glfw.set_window_user_pointer(window, app_shell)
     glfw.set_framebuffer_size_callback(window, framebuffer_size_callback)
@@ -161,7 +160,7 @@ def main():
 
     app_shell.wake()
 
-    assets.load(graphics=graphics, base_dir=base_dir)
+    assets.load(graphics=graphics)
     app_shell.prepare()
 
     previous_time = time.time()

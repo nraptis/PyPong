@@ -2,12 +2,12 @@
 from __future__ import annotations
 from typing import Optional
 from asset_bundle import AssetBundle
-from graphics_library import GraphicsLibrary
-from graphics_sprite import GraphicsSprite
-from graphics_pipeline import GraphicsPipeline
-from graphics_matrix import GraphicsMatrix
-from graphics_sprite_2d_instance import GraphicsSprite2DInstance
-from graphics_color import GraphicsColor
+from graphics.graphics_library import GraphicsLibrary
+from graphics.graphics_sprite import GraphicsSprite
+from graphics.graphics_pipeline import GraphicsPipeline
+from graphics.graphics_matrix import GraphicsMatrix
+from graphics.graphics_sprite_2d_instance import GraphicsSprite2DInstance
+from graphics.graphics_color import GraphicsColor
 
 class Ball:
     def __init__(
@@ -62,7 +62,7 @@ class Ball:
         else:
             self.instance.color = GraphicsColor(1.0, 1.0, 1.0, 1.0)
 
-        self.instance.render(shader_program=pipeline.program_sprite2d)
+        self.instance.render(shader_program=pipeline.program_sprite_2d)
 
     # ------------------------------------------------------------------
     # Dispose
