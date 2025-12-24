@@ -9,8 +9,8 @@ import time
 from graphics.graphics_app_shell import GraphicsAppShell
 from graphics.graphics_pipeline import GraphicsPipeline
 from graphics.graphics_library import GraphicsLibrary
-from asset_bundle import AssetBundle
-from pong_scene import PongScene
+from pong.pong_asset_bundle import PongAssetBundle
+from pong.pong_scene import PongScene
 
 def framebuffer_size_callback(window, width, height):
     app_shell = glfw.get_window_user_pointer(window)
@@ -143,7 +143,7 @@ def main():
                                frame_buffer_width=frame_buffer_width,
                                frame_buffer_height=frame_buffer_height)
     
-    assets = AssetBundle()
+    assets = PongAssetBundle()
     pong_scene = PongScene(graphics=graphics, pipeline=pipeline, assets=assets)
     app_shell = GraphicsAppShell(scene=pong_scene)
 

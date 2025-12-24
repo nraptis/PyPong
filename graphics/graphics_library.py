@@ -3,6 +3,8 @@
 from __future__ import annotations
 from typing import Optional, Sequence, TypeVar
 import numpy as np
+from PIL import Image
+from image.bitmap import Bitmap
 from OpenGL import GL as gl
 from graphics.graphics_float_bufferable import GraphicsFloatBufferable
 from graphics.graphics_array_buffer import GraphicsArrayBuffer
@@ -234,73 +236,297 @@ class GraphicsLibrary:
 
         print("Deleting Texture @", idx)
         gl.glDeleteTextures(1, [idx])
-            
-    # --- variant that takes a "bitmap" (you decide what that is) ----------
-    def texture_generate_from_bitmap(self, bitmap) -> int:
-        if bitmap is None:
+    
+    # --------------------------------------------------------------
+    # ONE place that calls glTexImage2D: allocate only
+    # --------------------------------------------------------------
+    def texture_generate(self, width: int, height: int) -> int:
+        width = int(width)
+        height = int(height)
+        if width <= 0 or height <= 0:
             return -1
 
-        # Expecting numpy array (H, W, 4), dtype=uint8
-        data = np.asarray(bitmap, dtype=np.uint8)
-        if data.ndim != 3 or data.shape[2] != 4:
-            raise ValueError("texture_generate_from_bitmap expects shape (H, W, 4) RGBA array")
-
-        height, width, _ = data.shape
-
-        tex = gl.glGenTextures(1)
-        tex_id = int(tex[0] if isinstance(tex, (list, tuple)) else tex)
-        if tex_id == 0:
+        texture_index = gl.glGenTextures(1)
+        try:
+            texture_index = int(texture_index)
+        except Exception:
             return -1
 
-        gl.glBindTexture(gl.GL_TEXTURE_2D, tex_id)
-        self.texture_set_filter_linear()
-        self.texture_set_clamp()
+        gl.glBindTexture(gl.GL_TEXTURE_2D, texture_index)
 
+        gl.glBindTexture(gl.GL_TEXTURE_2D, texture_index)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE)
+
+        # Allocate storage, do not upload pixels.
+        # This is the only glTexImage2D call in the entire codebase.
         gl.glTexImage2D(
             gl.GL_TEXTURE_2D,
             0,
-            gl.GL_RGBA,
+            gl.GL_RGBA8,               # sized internal format
             width,
             height,
             0,
+            gl.GL_RGBA,
+            gl.GL_UNSIGNED_BYTE,
+            None,                      # <-- allocate only
+        )
+        return texture_index
+    
+    # --- variant that takes a "bitmap" -----------------------------------
+    def texture_generate_bitmap(
+        self,
+        bitmap: Optional[Bitmap],
+    ) -> int:
+        if bitmap is None:
+            print("⚠️ texture_generate_bitmap: bitmap is None")
+            return -1
+        if bitmap.width <= 0 or bitmap.height <= 0:
+            print(
+                "⚠️ texture_generate_bitmap: invalid bitmap size "
+                f"width={bitmap.width}, height={bitmap.height}"
+            )
+            return -1
+
+        texture_index = self.texture_generate(bitmap.width, bitmap.height)
+        if texture_index < 0:
+            print("⚠️ texture_generate_bitmap: texture_generate failed")
+            return -1
+
+        self.texture_write_bitmap(texture_index, bitmap)
+        return texture_index
+
+
+    # --- variant that takes a Pillow image --------------------------------
+    def texture_generate_pillow(
+        self,
+        image: Optional[Image.Image],
+    ) -> int:
+        if image is None:
+            print("⚠️ texture_generate_pillow: image is None")
+            return -1
+
+        width, height = image.size
+        if width <= 0 or height <= 0:
+            print(
+                "⚠️ texture_generate_pillow: invalid image size "
+                f"width={width}, height={height}"
+            )
+            return -1
+
+        texture_index = self.texture_generate(width, height)
+        if texture_index < 0:
+            print("⚠️ texture_generate_pillow: texture_generate failed")
+            return -1
+
+        self.texture_write_pillow(texture_index, image)
+        return texture_index
+
+
+    # --- variant that creates a random RGBA texture -----------------------
+    def texture_generate_random(
+        self,
+        width: int,
+        height: int,
+    ) -> int:
+        width = int(width)
+        height = int(height)
+
+        if width <= 0 or height <= 0:
+            print(f"⚠️ texture_generate_random: invalid size width={width}, height={height}")
+            return -1
+
+        texture_index = self.texture_generate(width, height)
+        if texture_index < 0:
+            print("⚠️ texture_generate_random: texture_generate failed")
+            return -1
+
+        # Random RGB, solid alpha
+        count = 4 * width * height
+        data = np.empty((count,), dtype=np.uint8)
+        data[0::4] = np.random.randint(0, 256, size=(width * height,), dtype=np.uint8)  # R
+        data[1::4] = np.random.randint(0, 256, size=(width * height,), dtype=np.uint8)  # G
+        data[2::4] = np.random.randint(0, 256, size=(width * height,), dtype=np.uint8)  # B
+        data[3::4] = 255  # A
+
+        self.texture_write_numpy(texture_index, data, width, height)
+        return texture_index
+
+
+    # --- variant that creates a texture from a numpy buffer ----------------
+    def texture_generate_numpy(
+        self,
+        data: Optional[np.ndarray],
+        width: int,
+        height: int,
+    ) -> int:
+        if data is None:
+            print("⚠️ texture_generate_numpy: data is None")
+            return -1
+
+        width = int(width)
+        height = int(height)
+
+        if width <= 0 or height <= 0:
+            print(f"⚠️ texture_generate_numpy: invalid size width={width}, height={height}")
+            return -1
+
+        texture_index = self.texture_generate(width, height)
+        if texture_index < 0:
+            print("⚠️ texture_generate_numpy: texture_generate failed")
+            return -1
+
+        self.texture_write_numpy(texture_index, data, width, height)
+        return texture_index
+    
+    # --------------------------------------------------------------
+    # Write from NumPy: MUST be exactly 4*width*height bytes
+    # No conversions, no guessing. Print + return if wrong.
+    # --------------------------------------------------------------
+    def texture_write_numpy(
+        self,
+        texture_index: int,
+        data: Optional[np.ndarray],
+        width: int,
+        height: int,
+    ) -> None:
+
+        if data is None:
+            print("⚠️ texture_write_numpy: data is None")
+            return
+
+        # Safely coerce texture_index
+        try:
+            texture_index = int(texture_index)
+        except Exception:
+            print(f"⚠️ texture_write_numpy: texture_index not castable to int "
+                f"(texture_index={texture_index})")
+            return
+
+        if texture_index < 0:
+            print(f"⚠️ texture_write_numpy: invalid texture_index={texture_index}")
+            return
+        
+        # Safely coerce width / height
+        try:
+            width = int(width)
+            height = int(height)
+        except Exception:
+            print(f"⚠️ texture_write_numpy: width/height not castable to int "
+                f"(width={width}, height={height})")
+            return
+
+        if texture_index < 0:
+            print(f"⚠️ texture_write_numpy: invalid texture_index={texture_index}")
+            return
+
+        if width <= 0 or height <= 0:
+            print(f"⚠️ texture_write_numpy: invalid size width={width}, height={height}")
+            return
+
+        # Must be a NumPy array
+        if not isinstance(data, np.ndarray):
+            print(f"⚠️ texture_write_numpy: data must be np.ndarray, got {type(data)}")
+            return
+
+        # Must be uint8
+        if data.dtype != np.uint8:
+            print(f"⚠️ texture_write_numpy: data.dtype must be np.uint8, got {data.dtype}")
+            return
+
+        # Must be contiguous
+        if not data.flags["C_CONTIGUOUS"]:
+            print("⚠️ texture_write_numpy: data must be C-contiguous")
+            return
+
+        # Enforce exact byte count: 4 * width * height
+        expected = 4 * width * height
+        actual = int(data.size)  # uint8 => elements == bytes
+
+        if actual != expected:
+            print(
+                "⚠️ texture_write_numpy: wrong buffer size. "
+                f"expected {expected} uint8 values (=4*{width}*{height}), "
+                f"got {actual}. data.shape={data.shape}"
+            )
+            return
+
+        gl.glBindTexture(gl.GL_TEXTURE_2D, texture_index)
+
+        # Safe unpack for any row width
+        gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
+
+        # Upload into existing storage (no glTexImage2D here)
+        gl.glTexSubImage2D(
+            gl.GL_TEXTURE_2D,
+            0,
+            0, 0,
+            width,
+            height,
             gl.GL_RGBA,
             gl.GL_UNSIGNED_BYTE,
             data,
         )
 
-        print("Generating Texture @", tex_id)
-        return tex_id
+    # --------------------------------------------------------------
+    # Write from Pillow: only conversion allowed is mode->RGBA
+    # Then calls texture_write_numpy with a flat uint8 buffer.
+    # --------------------------------------------------------------
+    def texture_write_pillow(
+        self,
+        texture_index: int,
+        image: Optional[Image.Image],
+    ) -> None:
 
-    # --- variant that creates a random RGBA texture -----------------------
+        if image is None:
+            print("⚠️ texture_write_pillow: image is None")
+            return
 
-    def texture_generate_random(self, width: int, height: int) -> int:
-        width = int(width)
-        height = int(height)
+        img = image
+        if img.mode != "RGBA":
+            print(f"🟡 texture_write_pillow: converting image mode {img.mode} -> RGBA")
+            img = img.convert("RGBA")
 
-        tex = gl.glGenTextures(1)
-        tex_id = int(tex[0] if isinstance(tex, (list, tuple)) else tex)
-        if tex_id == 0:
-            return -1
+        width, height = img.size
+        if width <= 0 or height <= 0:
+            print(
+                "⚠️ texture_write_pillow: invalid image size "
+                f"width={width}, height={height}"
+            )
+            return
 
-        gl.glBindTexture(gl.GL_TEXTURE_2D, tex_id)
-        self.texture_set_filter_linear()
-        self.texture_set_clamp()
+        # Pillow RGBA -> flat uint8 buffer (4 * width * height)
+        arr = np.array(img, dtype=np.uint8)
+        arr = np.ascontiguousarray(arr).reshape(-1)
 
-        # random RGBA, each channel 0..255
-        pixels = np.random.randint(0, 256, size=(height, width, 4), dtype=np.uint8)
+        self.texture_write_numpy(texture_index, arr, width, height)
 
-        gl.glTexImage2D(
-            gl.GL_TEXTURE_2D,
-            0,
-            gl.GL_RGBA,
-            width,
-            height,
-            0,
-            gl.GL_RGBA,
-            gl.GL_UNSIGNED_BYTE,
-            pixels,
-        )
-        return tex_id
+    # --------------------------------------------------------------
+    # Write from Bitmap: just calls texture_write_pillow
+    # --------------------------------------------------------------
+    def texture_write_bitmap(
+        self,
+        texture_index: int,
+        bitmap: Optional[Bitmap],
+    ) -> None:
+
+        if bitmap is None:
+            print("⚠️ texture_write_bitmap: bitmap is None")
+            return
+
+        if bitmap.width <= 0 or bitmap.height <= 0:
+            print(
+                "⚠️ texture_write_bitmap: invalid bitmap size "
+                f"width={bitmap.width}, height={bitmap.height}"
+            )
+            return
+
+        # Bitmap -> Pillow RGBA -> texture_write_pillow
+        image = bitmap.export_pillow()
+        self.texture_write_pillow(texture_index, image)
+
 
     # ----------------------------------------------------------------------
     # Blending

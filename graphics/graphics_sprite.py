@@ -63,12 +63,16 @@ class GraphicsSprite:
     def print(self) -> None:
         print("GraphicsSprite -> [" + str(self.width) + ", " + str(self.height) + "]")
         if self.texture:
-            print("\tTexture Index: " + str(self.texture.texture_index))
-            if self.texture.subdirectory:
-                print("\ttTexture File: " + str(self.texture.subdirectory) + " / " + self.texture.name)
-            else:
-                print("\ttTexture File: " + self.texture.name)
-
+            print(f"\tGraphicsTexture -> [{self.width}, {self.height}]")
+            print(f"\t\tIndex = {self.texture.texture_index}")
+            if self.texture.subdirectory is not None or self.texture.name is not None:
+                if self.subdirectory is not None and self.texture.name is not None:
+                    print(f"\t\tSource = {self.texture.subdirectory}/{self.texture.name}")
+                elif self.subdirectory is not None:
+                    print(f"\t\tSource = {self.texture.subdirectory}")
+                else:
+                    print(f"\t\tSource = {self.texture.name}")
+                
         print("\tX: [" + str(self.start_x) + ", " + str(self.end_x) + str("]"))
         print("\tY: [" + str(self.start_y) + ", " + str(self.end_y) + str("]"))
         print("\tU: [" + str(self.start_u) + ", " + str(self.end_u) + str("]"))

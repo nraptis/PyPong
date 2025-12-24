@@ -7,7 +7,7 @@ from graphics.graphics_texture import GraphicsTexture
 from graphics.graphics_sprite import GraphicsSprite
 from graphics.graphics_library import GraphicsLibrary
 
-class AssetBundle:
+class PongAssetBundle:
 
     # class-level (static) constants
     paddle_width: int = 48
@@ -35,11 +35,12 @@ class AssetBundle:
     # Initial load: create texture + sprite instances
     # ------------------------------------------------------------------
     def load(self, graphics: GraphicsLibrary) -> None:
-        
+
         # --------------------------------------------------------------
         # ball.png → texture + sprite
         # --------------------------------------------------------------
-        self.ball_texture = GraphicsTexture(graphics=graphics, subdirectory="images", name="ball")
+        self.ball_texture = GraphicsTexture(graphics=graphics)
+        self.ball_texture.load_file(subdirectory="images", name="ball")
         self.ball_texture.print()
 
         self.ball_sprite = GraphicsSprite()
@@ -53,12 +54,14 @@ class AssetBundle:
         self.digit_table.clear()
 
         for i in range(10):
-            tex = GraphicsTexture(graphics=graphics, subdirectory="images", name=f"digit_{i}.png")
-            tex.print()
-            self.digit_textures.append(tex)
+            texture = GraphicsTexture(graphics=graphics)
+            texture.load_file(subdirectory="images", name=f"digit_{i}.png")
+
+            texture.print()
+            self.digit_textures.append(texture)
 
             spr = GraphicsSprite()
-            spr.load(texture=tex)
+            spr.load(texture=texture)
             spr.print()
 
             self.digit_table[i] = spr
@@ -66,7 +69,9 @@ class AssetBundle:
         # --------------------------------------------------------------
         # paddle.png → texture + sprite
         # --------------------------------------------------------------
-        self.paddle_texture = GraphicsTexture(graphics=graphics, subdirectory="images", name="paddle")
+
+        self.paddle_texture = GraphicsTexture(graphics=graphics)
+        self.paddle_texture.load_file(subdirectory="images", name="paddle")
         self.paddle_texture.print()
 
         self.paddle_sprite = GraphicsSprite()
@@ -76,7 +81,8 @@ class AssetBundle:
         # --------------------------------------------------------------
         # wall.png → texture only
         # --------------------------------------------------------------
-        self.wall_texture = GraphicsTexture(graphics=graphics, subdirectory="images", name="wall")
+        self.wall_texture = GraphicsTexture(graphics=graphics)
+        self.wall_texture.load_file(subdirectory="images", name="wall")
         self.wall_texture.print()
         
         self.loaded = True
@@ -115,19 +121,20 @@ class AssetBundle:
         # Update graphics on each texture and call load()
         if self.ball_texture is not None:
             self.ball_texture.graphics = graphics
-            self.ball_texture.load()
+            self.ball_texture.load_file(subdirectory="images", name="ball")
 
         if self.paddle_texture is not None:
             self.paddle_texture.graphics = graphics
-            self.paddle_texture.load()
+            self.paddle_texture.load_file(subdirectory="images", name="paddle")
 
         if self.wall_texture is not None:
             self.wall_texture.graphics = graphics
-            self.wall_texture.load()
+            self.wall_texture.load_file(subdirectory="images", name="wall")
 
-        for tex in self.digit_textures:
-            tex.graphics = graphics
-            tex.load()
+        for i in range(10):
+            texture = self.digit_textures[i]    
+            texture.graphics = graphics
+            texture.load_file(subdirectory="images", name=f"digit_{i}.png")
 
         self.loaded = True
 

@@ -1,4 +1,4 @@
-# rgba.py
+# image/rgba.py
 
 class RGBA:
 

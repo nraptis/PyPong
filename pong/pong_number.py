@@ -7,7 +7,7 @@ from graphics.graphics_library import GraphicsLibrary
 from graphics.graphics_pipeline import GraphicsPipeline
 from graphics.graphics_matrix import GraphicsMatrix
 from graphics.graphics_sprite_2d_instance import GraphicsSprite2DInstance
-from asset_bundle import AssetBundle
+from pong.pong_asset_bundle import PongAssetBundle
 from graphics.graphics_texture import GraphicsTexture
 from graphics.shader_program import ShaderProgram
 
@@ -15,6 +15,7 @@ class PongNumber:
     # Horizontal spacing per digit in screen units
     digit_width: float = 60.0
 
+    
     def __init__(self) -> None:
         self.x: float = 0.0
         self.y: float = 0.0
@@ -25,7 +26,7 @@ class PongNumber:
     # ------------------------------------------------------------------
     # Rebuild
     # ------------------------------------------------------------------
-    def rebuild(self, score: int, graphics: GraphicsLibrary, assets: AssetBundle) -> None:
+    def rebuild(self, score: int, graphics: GraphicsLibrary, assets: PongAssetBundle) -> None:
         self.dispose()
         value = int(score)
         string = str(value)

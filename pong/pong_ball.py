@@ -1,7 +1,7 @@
 # paddle.py
 from __future__ import annotations
 from typing import Optional
-from asset_bundle import AssetBundle
+from pong.pong_asset_bundle import PongAssetBundle
 from graphics.graphics_library import GraphicsLibrary
 from graphics.graphics_sprite import GraphicsSprite
 from graphics.graphics_pipeline import GraphicsPipeline
@@ -9,7 +9,7 @@ from graphics.graphics_matrix import GraphicsMatrix
 from graphics.graphics_sprite_2d_instance import GraphicsSprite2DInstance
 from graphics.graphics_color import GraphicsColor
 
-class Ball:
+class PongBall:
     def __init__(
         self,
         x: float,
@@ -21,14 +21,14 @@ class Ball:
         self.x_speed = 0
         self.y_speed = 0
         self.instance = GraphicsSprite2DInstance()
-        self.width = float(AssetBundle.ball_width)
-        self.height = float(AssetBundle.ball_height)
+        self.width = float(PongAssetBundle.ball_width)
+        self.height = float(PongAssetBundle.ball_height)
         self.is_red = False
 
     # ------------------------------------------------------------------
     # Lifecycle: load
     # ------------------------------------------------------------------
-    def load(self, assets: Optional[AssetBundle], graphics: Optional[GraphicsLibrary]) -> None:
+    def load(self, assets: Optional[PongAssetBundle], graphics: Optional[GraphicsLibrary]) -> None:
         self.instance.load(graphics=graphics, sprite=assets.ball_sprite)
 
     # ------------------------------------------------------------------

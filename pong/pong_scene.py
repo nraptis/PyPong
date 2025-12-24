@@ -2,7 +2,7 @@
 from __future__ import annotations
 from OpenGL import GL as gl
 from graphics.graphics_scene import GraphicsScene
-from asset_bundle import AssetBundle
+from pong.pong_asset_bundle import PongAssetBundle
 from graphics.graphics_primitives import Sprite2DVertex
 from graphics.graphics_array_buffer import GraphicsArrayBuffer
 from graphics.graphics_library import GraphicsLibrary
@@ -10,11 +10,11 @@ from graphics.graphics_pipeline import GraphicsPipeline
 from graphics.graphics_matrix import GraphicsMatrix
 from graphics.graphics_color import GraphicsColor
 from graphics.graphics_shape_2d_instance import GraphicsShape2DInstance
-from paddle import Paddle
-from ball import Ball
-from pong_state import PongState
-from pong_net import PongNet
-from pong_number import PongNumber
+from pong.pong_paddle import PongPaddle
+from pong.pong_ball import PongBall
+from pong.pong_state import PongState
+from pong.pong_net import PongNet
+from pong.pong_number import PongNumber
 import random
 
 rng = random.Random()
@@ -22,8 +22,13 @@ rng = random.Random()
 class PongScene(GraphicsScene):
 
     paddle_inset: int = 34
-    def __init__(self, graphics: GraphicsLibrary, pipeline: GraphicsPipeline, assets: AssetBundle) -> None:
+    def __init__(self,
+                 graphics: GraphicsLibrary,
+                 pipeline: GraphicsPipeline,
+                 assets: PongAssetBundle) -> None:
+        
         super().__init__(graphics, pipeline)
+
         self.assets = assets
 
         self.left_score = 0
@@ -32,11 +37,11 @@ class PongScene(GraphicsScene):
         self.mouse_x = float(graphics.frame_buffer_width) / 2.0
         self.mouse_y = float(graphics.frame_buffer_height) / 2.0
         
-        self.ball = Ball(x=0.0, y=0.0)
+        self.ball = PongBall(x=0.0, y=0.0)
         self.reset_ball()
 
-        self.left_paddle = Paddle(x=0.0, y=0.0)
-        self.right_paddle = Paddle(x=0.0, y=0.0)
+        self.left_paddle = PongPaddle(x=0.0, y=0.0)
+        self.right_paddle = PongPaddle(x=0.0, y=0.0)
         self.reset_paddles()
 
         self.dead_timer = float(0.0)
@@ -50,11 +55,7 @@ class PongScene(GraphicsScene):
         self.number_right = PongNumber()
         
         self.reset_numbers()
-
-    # --------------------------------------------------------------
-    # Lifecycle
-    # --------------------------------------------------------------
-
+    
     def wake(self) -> None:
         ...
 
@@ -78,10 +79,6 @@ class PongScene(GraphicsScene):
         self.rebuild_number_left(self.left_score)
         self.rebuild_number_right(self.right_score)
     
-    # --------------------------------------------------------------
-    # Main loop functions
-    # --------------------------------------------------------------
-
     def update(self, dt: float) -> None:
         # No prints here
         self.left_paddle.update(dt=dt)
@@ -96,27 +93,18 @@ class PongScene(GraphicsScene):
             self.update_play(dt)
         
     def draw(self) -> None:
-
         shape_program = self.pipeline.program_shape_2d
         sprite_program = self.pipeline.program_sprite_2d
-
         width = float(self.graphics.frame_buffer_width)
         height = float(self.graphics.frame_buffer_height)
-
         projection_matrix = GraphicsMatrix()
         projection_matrix.ortho_size(width=width, height=height)
-
         self.graphics.clear_rgb(0.04, 0.04, 0.08)
-
         self.graphics.blend_set_disabled()
-        
         self.net.draw(graphics=self.graphics, pipeline=self.pipeline, projection_matrix=projection_matrix)
-        
         self.graphics.blend_set_alpha()
-        
         self.number_left.draw(graphics=self.graphics, pipeline=self.pipeline, projection_matrix=projection_matrix)
         self.number_right.draw(graphics=self.graphics, pipeline=self.pipeline, projection_matrix=projection_matrix)
-        
         self.left_paddle.draw(graphics=self.graphics, pipeline=self.pipeline, projection_matrix=projection_matrix)
         self.right_paddle.draw(graphics=self.graphics, pipeline=self.pipeline, projection_matrix=projection_matrix)
         self.ball.draw(graphics=self.graphics, pipeline=self.pipeline, projection_matrix=projection_matrix)
